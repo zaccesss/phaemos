@@ -40,3 +40,7 @@ Thumbs.db
 # Logs
 *.log
 logs/
+
+# Local agent instructions
+.github/AGENTS.md
+.github/copilot-instructions.md
