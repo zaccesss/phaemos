@@ -1,0 +1,24 @@
+#!/bin/sh
+# .githooks/prepare-commit-msg
+#
+# I strip Co-authored-by lines added by AI coding assistants.
+# This repo does not accept AI co-author credits anywhere.
+#
+# One-time setup per clone: git config core.hooksPath .githooks
+
+MSG_FILE=$1
+[ -n "$MSG_FILE" ] && [ -f "$MSG_FILE" ] || exit 0
+
+tmp="${MSG_FILE}.$$.tmp"
+awk '
+  /^Co-authored-by:/ {
+    line = tolower($0)
+    if (line ~ /cursor/ || line ~ /openai/ || line ~ /anthropic/ || line ~ /claude/ \
+        || line ~ /copilot/ || line ~ /chatgpt/ || line ~ /grok/ || line ~ /x-ai/ \
+        || line ~ /perplexity/ || line ~ /gemini/ || line ~ /github/) {
+      next
+    }
+  }
+  { print }
+' "$MSG_FILE" > "$tmp" 2>/dev/null && mv "$tmp" "$MSG_FILE" || rm -f "$tmp"
+exit 0

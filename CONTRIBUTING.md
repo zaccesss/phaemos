@@ -4,13 +4,29 @@ Thank you for taking the time to contribute to PHAEMOS.
 
 ---
 
+## One-time setup
+
+After cloning, activate the git hooks that enforce commit style:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+This enables:
+- `commit-msg` - rejects em/en dashes and Oxford commas in commit messages
+- `prepare-commit-msg` - strips AI co-author credits automatically
+
+---
+
 ## Workflow
 
 1. Create or pick an issue from the issue tracker.
 2. Create a branch from `main` following the naming convention below.
 3. Make focused changes with clear commit messages.
-4. Push your branch and open a pull request using the PR template.
-5. Wait for review and address any feedback.
+4. Update `logs/YYYY-MM-DD.md` with what changed and why (all changes go here).
+5. Update `CHANGELOG.md` under `[Unreleased]` for public-facing changes only.
+6. Push your branch and open a pull request using the PR template.
+7. Wait for CI to pass, then merge.
 
 ---
 
@@ -56,12 +72,20 @@ was made, not how.
 ## Code Standards
 
 - All new code must include comments explaining non-obvious logic.
-- Use UK English in all prose, comments and variable names
-  (e.g. `colour` not `color`, `organisation` not `organization`).
-- No Oxford commas in prose.
-- No em dashes or en dashes; use hyphens instead.
-- Backend: follow PEP 8. Run `ruff check` before committing.
+- **Write all comments in first person.** "I use this to..." not "Uses..." or "This function...".
+- Use UK English in all prose, comments and variable names (colour not color, organisation not organization).
+- No Oxford commas in prose or commit messages.
+- No em dashes or en dashes - use hyphens instead.
+- Backend: follow PEP 8. Run `ruff check backend/` before committing.
 - Frontend: TypeScript strict mode. Run `npm run lint` before committing.
+
+---
+
+## Logs and changelog
+
+- `logs/YYYY-MM-DD.md` - internal engineering record. Log all changes here, including reasoning and decisions.
+- `CHANGELOG.md` - public-facing release notes only. Never put internal session notes in CHANGELOG.md.
+- Update the log file as you work, not just at the end of a session.
 
 ---
 
@@ -69,7 +93,8 @@ was made, not how.
 
 AI-generated code is not accepted in this repository. All contributions must be
 written by the author. Do not include AI co-author attributions in commit
-messages (e.g. no `Co-authored-by: GitHub Copilot`).
+messages or anywhere else in the codebase (no `Co-authored-by: GitHub Copilot`,
+no "Generated with Claude" or any similar attribution).
 
 ---
 
