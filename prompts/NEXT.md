@@ -2,7 +2,7 @@
 
 Read this file at the start of every new session to pick up exactly where we left off.
 
-**Last updated:** 2026-06-01
+**Last updated:** 2026-06-02
 
 ---
 
@@ -11,59 +11,50 @@ Read this file at the start of every new session to pick up exactly where we lef
 > Continue building Phaemos. Check your memory for full context. Pull and read suggestions/README.md for the backlog, docs/VERIFICATION.md for what is verified, and logs/LOG.md for session history. Start today's date log immediately before touching any file.
 >
 > Priority order from the backlog:
-> 1. Login page and session guard (frontend/app/login/page.tsx - biggest usability gap, admin panel is unusable without it)
-> 2. Full light mode across all components (ThemeToggle works but cards/charts are still hardcoded dark)
-> 3. WebSocket reconnect on disconnect (exponential backoff, max 5 attempts)
-> 4. Alert rule evaluation for all v2 sensors (evaluator currently only checks 6 fields)
-> 5. Remaining items in suggestions/README.md in priority order
+> 1. WebSocket reconnect on disconnect (exponential backoff, max 5 attempts) - find client with `grep -r "new WebSocket" frontend/`
+> 2. Alert rule evaluation for all v2 sensors (check Telemetry model columns vs docs/sensor_reference.md, extend ingest reading dict)
+> 3. ML retrain endpoint (POST /api/v1/ml/retrain, admin only, background task, 1-hour cooldown, reuses backend/ml/preprocess.py and train.py)
+> 4. Live sensor grid auto-update on device detail (poll /telemetry/{id}/latest every 5s, pass to SensorGrid prop)
+> 5. Multi-tenant device ownership (nullable owner_id FK on devices)
+> 6. alerts.resolved Boolean migration (USING resolved::boolean in SQL, remove str(resolved) cast)
+> 7. Ticket creation from alert banner (TicketForm prefill prop already exists from PR 76 - just wire AlertBanner)
+> 8. Pagination on tickets and devices pages
+> 9. Housekeeping at the very end: READMEs, docs/decisions.md, docs/api-reference.md, docs/security.md, SECURITY.md, Makefile, SUPPORT.md, CHANGELOG.md
 >
-> Also check hardware/inventory/needed.md - update status of any Amazon deliveries that have arrived and move them to owned.md.
->
-> Rules: update the session log after every file change. PRs auto-merge (already configured). No AI attribution in commits. First-person WHY comments in all code. Plain ASCII hyphens only, no em-dashes. UK English throughout.
+> Rules: update the session log after every file change. PRs auto-merge (configured). No AI attribution in commits. First-person WHY comments in code. Plain ASCII hyphens only. UK English throughout. Run pytest + ruff before every backend commit. Run npm run lint + npm run build before every frontend commit.
 
 ---
 
-## Current status
+## Current status (as of 2026-06-02)
 
-All 15 original backlog items are done (PRs 55-72). The app runs end to end locally with Docker.
+**Done this session (PRs 74-76):**
+- PR 74 MERGED: Security hardening - rate limiting on /auth/login (slowapi, 5/min), brute-force lockout (5 failures = 15min lock), WebSocket JWT auth (close 1008 on fail), telemetry GET/export require Bearer auth, password strength validation, firmware 2MB upload cap, CORS tightened, API key rotation endpoint, audit_service text() fix, last_login tracking, migrations/002_security_hardening.sql
+- PR 75 MERGED: Login page (frontend/app/login/page.tsx), Next.js edge middleware (frontend/middleware.ts) guards all routes, LogoutButton in navbar
+- PR 76 OPEN (CI running): Full light mode - dark: variants across all components and pages
 
 **What works:**
-- Dashboard with live device cards, per-sensor charts, time range picker, node type filter
-- Compare page - side by side charts for up to 3 devices
-- Device detail page - sensor grid + charts + Export CSV
-- Admin panel - user table, audit log, alert rules CRUD, firmware upload
-- Backend: JWT auth, audit logging, demo mode, data retention, CSV export, ML evaluate pipeline
-- Dark mode toggle (light mode body works, individual components still dark-only)
+- Dashboard, compare page, device detail, admin panel, alerts, tickets, devices
+- JWT auth end-to-end (login form, middleware guard, Bearer token for API, WS JWT)
+- Light/dark toggle switches the entire UI (PR 76, pending merge)
+- Security: rate limiting, lockout, WS auth, telemetry auth, password strength, CORS
+- Backend: audit log, demo mode, data retention, CSV export, ML pipeline, firmware OTA
+- Docker Compose runs end-to-end locally
 
-**New backlog (not done yet) - see suggestions/README.md:**
-1. Login page and session guard - HIGH (admin features need auth from UI)
-2. Full light mode across all components - HIGH (toggle exists but components are dark-only)
-3. WebSocket reconnect - MEDIUM
-4. Alert evaluator for all v2 sensors - MEDIUM
-5. ML retrain endpoint - MEDIUM
-6. Live sensor grid auto-update on device detail - MEDIUM
-7. Multi-tenant device ownership - LOW
-8. alerts.resolved String->Boolean migration - LOW
-9. Ticket creation from alert banner - LOW
-10. Pagination on tickets/devices pages - LOW
-11. Hardware inventory updates as deliveries arrive
-12. Hardware testing (waiting for components)
-13. Isolation Forest training (waiting for hardware data)
-14. Node enclosure design (Phase 2, after MVP validated)
+**Remaining backlog (see suggestions/README.md for full detail):**
+1. WebSocket reconnect - MEDIUM
+2. Alert evaluator for all v2 sensors - MEDIUM
+3. ML retrain endpoint - MEDIUM
+4. Live sensor grid auto-update - MEDIUM
+5. Multi-tenant device ownership - LOW
+6. alerts.resolved Boolean migration - LOW
+7. Ticket creation from alert banner - LOW (TicketForm prefill prop already added)
+8. Pagination on tickets and devices - LOW
+9. End-of-session housekeeping (docs, READMEs, CHANGELOG, Makefile, SUPPORT.md, docs/security.md)
 
----
-
-## Hardware status
-
-Amazon order placed May 2026 - £133.09, most arriving this week.
-See `hardware/inventory/needed.md` for delivery dates.
-See `hardware/inventory/owned.md` for what is already in hand.
-
-**Important notes:**
-- BMP280 ordered instead of BME280 - no humidity on secondary nodes. Check if acceptable.
-- AS5600 diametrically magnetised magnet still needs to be ordered.
-- Logic level shifter 3.3V-5V still needs to be ordered.
-- Check BOJACK 37-values kit and ELEGOO Starter Kit contents before collecting from Aston lab (Richard).
+**Hardware-blocked (do not start):**
+- Custom node enclosure design
+- Hardware testing
+- Train Isolation Forest
 
 ---
 
@@ -76,13 +67,14 @@ cd frontend && npm run dev
 curl http://localhost:8000/  # should return {"status":"ok"}
 ```
 
-If the DB is empty (containers were recreated with `docker compose down`), re-seed:
+Run migration on existing DB if backend crashes on login:
 ```bash
-# Get device IDs and API keys, POST telemetry with device_id in body
-# See logs/2026-06-01.md seeding section for the full script
+docker exec phaemos-db-1 psql -U postgres -d phaemos -c "ALTER TABLE users ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER NOT NULL DEFAULT 0, ADD COLUMN IF NOT EXISTS locked_until TIMESTAMP WITH TIME ZONE;"
 ```
 
-**Note:** `docker compose stop` preserves data. `docker compose down` wipes the postgres_data volume.
+If containers were recreated with `docker compose down`, re-seed (see logs/2026-06-01.md seeding section).
+
+**Note:** `docker compose stop` preserves data. `docker compose down` wipes postgres_data volume.
 
 ---
 
@@ -91,10 +83,20 @@ If the DB is empty (containers were recreated with `docker compose down`), re-se
 - UK English (colour/behaviour/organisation/licence)
 - No em/en dashes - hyphens only in comments
 - No Oxford commas
-- First-person WHY comments ("# I use X because Y")
+- First-person WHY comments in code
 - No AI co-author credits
 - Update `logs/YYYY-MM-DD.md` after every file change
 - Never commit directly to main
-- `git config core.hooksPath .githooks` on fresh clone
+- Hooks already executable: `git config core.hooksPath .githooks` already set
 - `echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > frontend/.env.local` on fresh clone
 - Auto-merge: `gh pr merge <n> --auto --merge --delete-branch`
+
+---
+
+## Important notes for next session
+
+- **TicketForm prefill prop** already exists (added in PR 76) - accept `prefill?: { device_id?, description?, title? }`. AlertBanner just needs a "Create Ticket" button that passes alert context.
+- **alerts.resolved** - the SQL schema has BOOLEAN but the Python model has Column(String). Do this migration before any alert work to avoid silent corruption.
+- **WebSocket client** - find with `grep -r "new WebSocket" frontend/`. Reconnect must NOT retry on 1008 close code (auth failure) - that would loop forever.
+- **Backend image rebuild** needed after any requirements.txt change: `docker compose build backend`
+- **Git hooks are now executable** - no more "hook ignored" warnings on commit
