@@ -1,90 +1,79 @@
 # Suggestions
 
-A living backlog of improvements and ideas for PHAEMOS.
+A living backlog of improvements for PHAEMOS. Updated at the end of every session.
 
-I keep all suggestions here as a single tracked list rather than individual files.
-I mark items done with [x] as they are implemented. I review this at the start of every session.
+- [x] = implemented and merged
+- [ ] = not yet done
+
+Read this at the start of every session to know what to work on next.
+High priority items first.
 
 ---
-
 ## Completed
 
-These were originally separate suggestion files. I am marking them done and removing the individual files.
-
-- [x] **Audit logging** - `backend/app/services/audit_service.py` created with `log_action(db, user_id, action, resource, resource_id, detail)`. The function uses raw SQL so audit entries are independent of the ORM and survive future schema changes. Routes still need to be wired up (see backlog).
-
-- [x] **`/auth/me` endpoint** - The `get_current_user` JWT dependency and `GET /auth/me` route are implemented in `backend/app/routes/auth.py`. Token decoding via python-jose, user lookup from DB, role returned in response.
-
-- [x] **Pre-commit ruff fix hook** - `.githooks/pre-commit` runs `ruff check --fix backend/` and stages auto-fixed changes before the commit is created. Unfixable violations abort the commit.
-
-- [x] **Rate limiting** - `slowapi` integrated with 60 req/min on telemetry ingest, 10 req/min on login, 5 req/min on register. `SlowAPIMiddleware` added to the FastAPI app.
-
-- [x] **Password strength validation** - `@field_validator` on `UserRegister` in `backend/app/schemas/user.py`: minimum 8 characters, at least one uppercase, at least one digit. Clear 422 error message per violation.
-
-- [x] **Offline device detection** - Background APScheduler job in `backend/app/routes/devices.py` queries `last_seen < now() - interval '10 minutes'`, sets status to `'offline'`, and inserts a warning Alert row. Configurable via `DEVICE_OFFLINE_THRESHOLD_MINUTES` env var.
-
-- [x] **Alembic migrations** - `alembic init backend/alembic` run, `alembic.ini` uses `DATABASE_URL`, initial migration generated from current models. `Base.metadata.create_all()` removed from `main.py`. Render deploy command updated to run `alembic upgrade head`.
-
-- [x] **JWT in httpOnly cookies** - `POST /auth/login` now returns the token via `Set-Cookie: token=...; HttpOnly; Secure; SameSite=Strict`. Axios client updated to `withCredentials: true`. CORS updated to include `allow_credentials=True` with explicit origin list. `POST /auth/logout` clears the cookie server-side.
-
-- [x] **Frontend login page** - `frontend/app/login/page.tsx` with email/password form, POST to `/api/v1/auth/login`, token stored via cookie (httpOnly), redirect to `/` on success. Logout button clears token. `frontend/app/register/page.tsx` for sign-up.
-
-- [x] **phaemos.com website** - Landing page, architecture overview, features list, demo video embed, docs link, contact form via Resend. Deployed to Vercel on phaemos.com. `ALLOWED_ORIGINS` updated to include `https://phaemos.com`.
+- [x] Audit logging - audit_service.py, wired to all mutating routes (PRs 55-56)
+- [x] /auth/me endpoint - JWT dependency, get_current_user (PR 55)
+- [x] Pre-commit ruff fix hook
+- [x] Rate limiting - slowapi
+- [x] Password strength validation
+- [x] Offline device detection - APScheduler
+- [x] Alembic migrations
+- [x] JWT in httpOnly cookies
+- [x] Frontend login page (phaemos.com - separate site)
+- [x] Wire TicketForm to POST /tickets (PR 58)
+- [x] GET /audit-logs endpoint and AuditLog component (PRs 55, 58)
+- [x] UserTable wired to GET /auth/users (PRs 55, 58)
+- [x] Device detail page (PR 59)
+- [x] Audit calls in all routes (PR 56)
+- [x] Per-sensor charts with time range selector (PR 60)
+- [x] Alert rules CRUD + AlertRulesPanel (PR 61)
+- [x] Demo mode - POST /demo/start with APScheduler (PR 63)
+- [x] CSV export - GET /telemetry/export (PR 62)
+- [x] Device comparison page /compare (PR 64)
+- [x] ML evaluate.py - all 4 functions (PR 65)
+- [x] Uptime Kuma setup guide (PR 70)
+- [x] node_type filter on telemetry + dashboard picker (PR 66)
+- [x] firmware_version column on Device + DeviceCard display (PR 67)
+- [x] 90-day telemetry data retention - APScheduler cron (PR 68)
+- [x] Dark/light mode toggle - ThemeToggle + localStorage (PR 69)
+- [x] PostCSS config (was missing - broke Tailwind)
+- [x] alerts.resolved boolean/string fix
+- [x] Dashboard selected-device polling bug fix
 
 ---
 
 ## Backlog
 
-I came up with these during and after the v2 scaffold session. All are unimplemented.
-
 ### High priority
 
-- [x] **Wire TicketForm to POST /api/v1/tickets** - Implemented in PR 58. Controlled form with title/description/priority/device_id fields, ErrorToast on failure, onSuccess callback.
+- [ ] **Login page and session guard** - `frontend/app/login/page.tsx` does not exist. Admin panel endpoints return 401 from the browser without a token. Add email/password form, POST to `/api/v1/auth/login`, store token, redirect protected routes to `/login` when unauthenticated.
 
-- [x] **Create GET /api/v1/audit endpoint** - Implemented in PR 55 (`backend/app/routes/audit.py`, admin-only, paginated). Wired to `AuditLog.tsx` in PR 58.
-
-- [x] **Wire UserTable to admin endpoint** - Implemented in PR 55 (`GET /api/v1/auth/users`) and wired to `UserTable.tsx` in PR 58.
-
-- [x] **Device detail page - full implementation** - Implemented in PR 59. Fetches device and latest reading in parallel, renders SensorGrid + TelemetryChart with time range selector, Export CSV button.
-
-- [x] **Wire audit calls into routes** - Implemented in PR 56. Calls added to DELETE /devices/{id}, PATCH /alerts/{id}/resolve, POST /firmware/upload, POST /tickets, PATCH /tickets/{id}.
+- [ ] **Full light mode across all components** - ThemeToggle works at the body level. DeviceCard, TelemetryChart, SensorGrid and all other components use hardcoded dark Tailwind classes. Add `dark:` prefixes to every dark-only class so the whole UI switches in light mode.
 
 ### Medium priority
 
-- [x] **Historical per-sensor charts with time range selector** - Implemented in PR 60. TelemetryChart redesigned with 4 collapsible sensor-group charts (Environmental/Vibration/Power/Surface) and 1h/6h/24h/7d time range buttons. Backend: from_ts/to_ts query params on GET /telemetry/{device_id}.
+- [ ] **WebSocket reconnect on disconnect** - The dashboard WebSocket closes on error without retrying. Add exponential backoff reconnect (max 5 attempts, 1s/2s/4s/8s/16s delays).
 
-- [x] **Alert rules configuration UI** - Implemented in PR 61. GET/PUT/DELETE /alert-rules routes added. AlertRulesPanel admin component with inline edit and new-rule form with device picker.
+- [ ] **Alert rule evaluation for all v2 sensors** - alert_service.py only checks 6 fields. Extend to cover all numeric telemetry columns dynamically.
 
-- [x] **Demo mode with simulated sensor data** - Implemented in PR 63. POST /demo/start creates a Demo Node device and starts a 5-second APScheduler job generating sinusoidal temperature and random vibration. POST /demo/stop cancels it.
+- [ ] **ML retrain endpoint** - POST /api/v1/ml/retrain - reads last N rows, runs train.py, replaces model.pkl, logs precision/recall to audit log. Admin only.
 
-- [x] **Export telemetry as CSV** - Implemented in PR 62. GET /telemetry/export streams a CSV via StreamingResponse. Frontend Export CSV link on the device detail page.
-
-- [x] **Multiple device comparison view** - Implemented in PR 64. /compare page with toggle buttons to select up to 3 devices and renders side-by-side TelemetryChart columns.
-
-- [x] **Implement ML evaluate.py** - Implemented in PR 65. load_model, evaluate_precision_recall (IsolationForest -1/1 remapping), plot_anomaly_distribution (matplotlib histogram), generate_report (full pipeline to report.json).
+- [ ] **Live sensor grid update on device detail page** - SensorGrid shows a static snapshot. Wire it to poll every 5s using the most recent useTelemetry reading.
 
 ### Low priority
 
-- [x] **Uptime Kuma status page** - Implemented in PR 70. docs/uptime-kuma.md covers Docker setup, Render and Vercel monitor config, Discord webhook notifications and public status page setup.
+- [ ] **Multi-tenant device ownership** - user_id FK on devices so technicians only see their own.
 
-- [x] **Per-node dashboard filters** - Implemented in PR 66. node_type query param on GET /telemetry/{device_id}; dashboard header has esp32/stm32/pico_w/nano/all toggle buttons.
+- [ ] **alerts.resolved column type migration** - Change from String to Boolean via Alembic migration. Remove str(resolved) workaround in routes/alerts.py.
 
-- [x] **Firmware version tracking in the dashboard** - Implemented in PR 67. firmware_version column added to devices table; exposed in DeviceResponse and DeviceUpdate; DeviceCard shows it in monospace when set.
+- [ ] **Ticket creation from alert banner** - Add "Create Ticket" button on AlertBanner pre-filled with alert context.
 
-- [x] **Telemetry data retention policy** - Implemented in PR 68. app/tasks/retention.py runs a cron job daily at 02:00 UTC deleting rows older than 90 days; row count written to audit_log; started via lifespan in main.py.
+- [ ] **Pagination on tickets and devices pages** - Add skip/limit query params and Next/Prev controls.
 
-- [x] **Dark/light mode toggle in the dashboard** - Implemented in PR 69. darkMode: 'class' in Tailwind config; ThemeToggle component in nav; pre-hydration inline script prevents flash; preference persisted to localStorage.
+- [ ] **Hardware inventory** - Update hardware/inventory/needed.md as Amazon deliveries arrive. Move items to owned.md when received.
 
----
+- [ ] **Custom node enclosure design** - After all 4 nodes tested on breadboard, design housing. Options: 3D print (Aston lab), laser cut acrylic, CNC aluminium. Do not start until sensor layout is finalised and PCB is designed.
 
-## New backlog (discovered 2026-06-01)
+- [ ] **Hardware testing** - Test full sensor suite on all 4 boards. See hardware/wiring/ for pinouts and hardware/inventory/owned.md for what is available.
 
-- [ ] **Login page and session guard** - All endpoints that use `get_current_user` require a JWT, but there is no login page in the frontend yet. Add `frontend/app/login/page.tsx` with email/password form, POST to `/api/v1/auth/login`, store token in an httpOnly cookie, and redirect protected pages to `/login` when unauthenticated.
-
-- [ ] **WebSocket reconnect on disconnect** - The dashboard WebSocket closes on error without retrying. Add an exponential backoff reconnect loop (max 5 attempts, 1s/2s/4s/8s/16s delay) so the dashboard self-heals after a brief network interruption.
-
-- [ ] **Alert rule evaluation for all v2 sensors** - The current alert rule evaluator only checks the 6 basic v2 fields. Extend it to cover the full sensor schema (ir_temperature, gas_level, shaft_rpm, etc.) so rules can be set on any field the hardware reports.
-
-- [ ] **Isolation Forest retraining trigger** - Once hardware data is being collected, add a `POST /api/v1/ml/retrain` endpoint that reads the last N telemetry rows, runs train.py, replaces model.pkl and logs the new precision/recall to the audit log.
-
-- [ ] **Multi-tenant device ownership** - Each device is currently owned by nobody. Add a user_id FK to the devices table so technicians can only see and manage their own devices, while admins see all. Useful once the team expands beyond a single admin account.
+- [ ] **Train Isolation Forest** - After 1-2 weeks of real telemetry, run backend/ml/train.py and evaluate with evaluate.py. Tune ANOMALY_SCORE_THRESHOLD.

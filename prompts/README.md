@@ -1,12 +1,10 @@
 # Prompts
 
-`NEXT.md` is the always-current continuation prompt. A new chat in a fresh context window reads this file first and knows exactly where to continue from.
+Continuation prompts for Claude Code sessions.
 
----
+| File | Purpose |
+|---|---|
+| [NEXT.md](NEXT.md) | Start-of-session prompt - current status, backlog priorities, setup steps, key rules |
+| [README.md](README.md) | This file |
 
-## Rules
-
-- `NEXT.md` is updated after every meaningful action - never let it go stale
-- If context is running low, update `NEXT.md` before stopping
-- Format: current status, in-progress work, numbered next steps, blockers, recently changed files
-- Never delete `NEXT.md` - only update it
+NEXT.md is rewritten at the end of every session. Read it first at the start of the next session.
