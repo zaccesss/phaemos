@@ -39,42 +39,52 @@ I came up with these during and after the v2 scaffold session. All are unimpleme
 
 ### High priority
 
-- [ ] **Wire TicketForm to POST /api/v1/tickets** - `frontend/components/tickets/TicketForm.tsx` is a stub. I need to add form state, validation, and a call to `api.post('/tickets', payload)`. On success refresh the TicketTable. On failure show ErrorToast.
-  - Files: `frontend/components/tickets/TicketForm.tsx`, `frontend/hooks/useTickets.ts` (needs creating)
-  - Depends on: login page (user must be authenticated), auth/me (created_by field)
+- [x] **Wire TicketForm to POST /api/v1/tickets** - Implemented in PR 58. Controlled form with title/description/priority/device_id fields, ErrorToast on failure, onSuccess callback.
 
-- [ ] **Create GET /api/v1/audit endpoint** - `audit_service.log_action()` exists but there is no route to read the audit log. I need a paginated `GET /audit-logs` endpoint in a new `backend/app/routes/audit.py`, admin-only via role check on the JWT.
-  - Wire to `frontend/components/admin/AuditLog.tsx` once the endpoint exists.
+- [x] **Create GET /api/v1/audit endpoint** - Implemented in PR 55 (`backend/app/routes/audit.py`, admin-only, paginated). Wired to `AuditLog.tsx` in PR 58.
 
-- [ ] **Wire UserTable to admin endpoint** - `frontend/components/admin/UserTable.tsx` is a stub. I need a `GET /api/v1/auth/users` admin-only route in `backend/app/routes/auth.py` that returns a paginated list of users, then wire the frontend table to it.
+- [x] **Wire UserTable to admin endpoint** - Implemented in PR 55 (`GET /api/v1/auth/users`) and wired to `UserTable.tsx` in PR 58.
 
-- [ ] **Device detail page - full implementation** - `frontend/app/devices/[id]/page.tsx` is a stub. I want it to fetch the device by ID from `GET /api/v1/devices/{id}`, fetch the latest telemetry reading, and render `<SensorGrid reading={latest} />` with a `<TelemetryChart deviceId={id} />` below it.
-  - The hook `useTelemetry(deviceId)` already exists and can be used client-side.
+- [x] **Device detail page - full implementation** - Implemented in PR 59. Fetches device and latest reading in parallel, renders SensorGrid + TelemetryChart with time range selector, Export CSV button.
 
-- [ ] **Wire audit calls into routes** - `audit_service.log_action()` is never called anywhere. I need to add calls in: `DELETE /devices/{id}`, `PATCH /alerts/{id}/resolve`, `POST /firmware/upload`, `POST /tickets`, ticket status changes. Each call needs the `current_user.id` from the JWT dependency.
+- [x] **Wire audit calls into routes** - Implemented in PR 56. Calls added to DELETE /devices/{id}, PATCH /alerts/{id}/resolve, POST /firmware/upload, POST /tickets, PATCH /tickets/{id}.
 
 ### Medium priority
 
-- [ ] **Historical per-sensor charts with time range selector** - The current TelemetryChart shows all sensor data overlaid on one chart. I want individual expandable charts per sensor category (temperature, vibration, power, etc.) with a time range picker (last 1h, 6h, 24h, 7d). Backend needs a `?sensor=temperature&from=ISO&to=ISO` query param on `GET /api/v1/telemetry`.
+- [x] **Historical per-sensor charts with time range selector** - Implemented in PR 60. TelemetryChart redesigned with 4 collapsible sensor-group charts (Environmental/Vibration/Power/Surface) and 1h/6h/24h/7d time range buttons. Backend: from_ts/to_ts query params on GET /telemetry/{device_id}.
 
-- [ ] **Alert rules configuration UI** - The alert rules table exists in the DB and the `alert_rules` ORM model exists. I need a UI in the admin panel to create, edit and delete alert rules (sensor field, operator, threshold, severity, message) without touching the database directly. Routes for CRUD on `/api/v1/alert-rules` need to be added.
+- [x] **Alert rules configuration UI** - Implemented in PR 61. GET/PUT/DELETE /alert-rules routes added. AlertRulesPanel admin component with inline edit and new-rule form with device picker.
 
-- [ ] **Demo mode with simulated sensor data** - For demos and testing without hardware, I want a `POST /api/v1/demo/start` endpoint that registers a virtual device and begins posting realistic simulated telemetry (sinusoidal temperature, random vibration noise, occasional anomaly injection) on a configurable interval. Useful for showing the dashboard to someone before hardware arrives.
+- [x] **Demo mode with simulated sensor data** - Implemented in PR 63. POST /demo/start creates a Demo Node device and starts a 5-second APScheduler job generating sinusoidal temperature and random vibration. POST /demo/stop cancels it.
 
-- [ ] **Export telemetry as CSV** - A `GET /api/v1/telemetry/export?device_id=X&from=ISO&to=ISO` endpoint that streams a CSV file. Frontend button in the device detail page that triggers the download. Useful for offline ML experimentation before the evaluate pipeline is built.
+- [x] **Export telemetry as CSV** - Implemented in PR 62. GET /telemetry/export streams a CSV via StreamingResponse. Frontend Export CSV link on the device detail page.
 
-- [ ] **Multiple device comparison view** - A dashboard page that shows two or three devices side by side with their TelemetryChart and SensorGrid. Useful once all four nodes are live - I can compare ESP32 and Pico 2W BME280 readings to spot sensor drift.
+- [x] **Multiple device comparison view** - Implemented in PR 64. /compare page with toggle buttons to select up to 3 devices and renders side-by-side TelemetryChart columns.
 
-- [ ] **Implement ML evaluate.py** - `backend/ml/evaluate.py` is a skeleton. Once Week 10 hardware data is collected I need to implement `evaluate_precision_recall`, `plot_anomaly_distribution` and `generate_report`. The plan: run `train.py`, call `evaluate`, check precision/recall, tune the `ANOMALY_SCORE_THRESHOLD` env var.
+- [x] **Implement ML evaluate.py** - Implemented in PR 65. load_model, evaluate_precision_recall (IsolationForest -1/1 remapping), plot_anomaly_distribution (matplotlib histogram), generate_report (full pipeline to report.json).
 
 ### Low priority
 
-- [ ] **Uptime Kuma status page** - Self-hosted Uptime Kuma monitoring the Render backend URL and the Vercel frontend URL. Public status page linked from phaemos.com footer and README. Alerts via Discord webhook when either goes down.
+- [x] **Uptime Kuma status page** - Implemented in PR 70. docs/uptime-kuma.md covers Docker setup, Render and Vercel monitor config, Discord webhook notifications and public status page setup.
 
-- [ ] **Per-node dashboard filters** - A dropdown in the dashboard header to filter telemetry by `node_type` (esp32, stm32, pico_w, nano). Currently all readings from all nodes mix in the chart. I want to isolate one node at a time for debugging.
+- [x] **Per-node dashboard filters** - Implemented in PR 66. node_type query param on GET /telemetry/{device_id}; dashboard header has esp32/stm32/pico_w/nano/all toggle buttons.
 
-- [ ] **Firmware version tracking in the dashboard** - The `firmware_version` column exists on the devices table. I want the OTA upload route to write the uploaded filename as the version, and the DeviceCard to display it alongside the device status.
+- [x] **Firmware version tracking in the dashboard** - Implemented in PR 67. firmware_version column added to devices table; exposed in DeviceResponse and DeviceUpdate; DeviceCard shows it in monospace when set.
 
-- [ ] **Telemetry data retention policy** - Once the system is live, the telemetry table will grow fast (4 nodes x 12 readings/minute x 1440 min/day = 69,120 rows/day). I want a scheduled PostgreSQL job (pg_cron) or a FastAPI background task that deletes rows older than 90 days and logs the row count deleted to the audit log.
+- [x] **Telemetry data retention policy** - Implemented in PR 68. app/tasks/retention.py runs a cron job daily at 02:00 UTC deleting rows older than 90 days; row count written to audit_log; started via lifespan in main.py.
 
-- [ ] **Dark/light mode toggle in the dashboard** - The UI uses dark Tailwind classes fixed in the layout. I want a toggle stored in localStorage that switches the `dark` class on the html element so the dashboard works in both modes.
+- [x] **Dark/light mode toggle in the dashboard** - Implemented in PR 69. darkMode: 'class' in Tailwind config; ThemeToggle component in nav; pre-hydration inline script prevents flash; preference persisted to localStorage.
+
+---
+
+## New backlog (discovered 2026-06-01)
+
+- [ ] **Login page and session guard** - All endpoints that use `get_current_user` require a JWT, but there is no login page in the frontend yet. Add `frontend/app/login/page.tsx` with email/password form, POST to `/api/v1/auth/login`, store token in an httpOnly cookie, and redirect protected pages to `/login` when unauthenticated.
+
+- [ ] **WebSocket reconnect on disconnect** - The dashboard WebSocket closes on error without retrying. Add an exponential backoff reconnect loop (max 5 attempts, 1s/2s/4s/8s/16s delay) so the dashboard self-heals after a brief network interruption.
+
+- [ ] **Alert rule evaluation for all v2 sensors** - The current alert rule evaluator only checks the 6 basic v2 fields. Extend it to cover the full sensor schema (ir_temperature, gas_level, shaft_rpm, etc.) so rules can be set on any field the hardware reports.
+
+- [ ] **Isolation Forest retraining trigger** - Once hardware data is being collected, add a `POST /api/v1/ml/retrain` endpoint that reads the last N telemetry rows, runs train.py, replaces model.pkl and logs the new precision/recall to the audit log.
+
+- [ ] **Multi-tenant device ownership** - Each device is currently owned by nobody. Add a user_id FK to the devices table so technicians can only see and manage their own devices, while admins see all. Useful once the team expands beyond a single admin account.
