@@ -70,7 +70,7 @@ High priority items first.
 
 - [ ] **Pagination on tickets and devices pages** - Add skip/limit query params and Next/Prev controls.
 
-- [ ] **Hardware inventory** - Update hardware/inventory/needed.md as Amazon deliveries arrive. Move items to owned.md when received.
+- [x] **Hardware inventory** - Updated hardware/inventory/needed.md and owned.md with all Amazon deliveries received.
 
 - [ ] **Custom node enclosure design** - After all 4 nodes tested on breadboard, design housing. Options: 3D print (Aston lab), laser cut acrylic, CNC aluminium. Do not start until sensor layout is finalised and PCB is designed.
 
