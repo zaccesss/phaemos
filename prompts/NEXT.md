@@ -2,76 +2,99 @@
 
 Read this file at the start of every new session to pick up exactly where we left off.
 
-**Last updated:** 2026-05-23 - governance session complete
+**Last updated:** 2026-06-01
+
+---
+
+## Start-of-session prompt (copy this in verbatim)
+
+> Continue building Phaemos. Check your memory for full context. Pull and read suggestions/README.md for the backlog, docs/VERIFICATION.md for what is verified, and logs/LOG.md for session history. Start today's date log immediately before touching any file.
+>
+> Priority order from the backlog:
+> 1. Login page and session guard (frontend/app/login/page.tsx - biggest usability gap, admin panel is unusable without it)
+> 2. Full light mode across all components (ThemeToggle works but cards/charts are still hardcoded dark)
+> 3. WebSocket reconnect on disconnect (exponential backoff, max 5 attempts)
+> 4. Alert rule evaluation for all v2 sensors (evaluator currently only checks 6 fields)
+> 5. Remaining items in suggestions/README.md in priority order
+>
+> Also check hardware/inventory/needed.md - update status of any Amazon deliveries that have arrived and move them to owned.md.
+>
+> Rules: update the session log after every file change. PRs auto-merge (already configured). No AI attribution in commits. First-person WHY comments in all code. Plain ASCII hyphens only, no em-dashes. UK English throughout.
 
 ---
 
 ## Current status
 
-All governance and rules work is DONE. The repo is in a clean, well-organised state.
+All 15 original backlog items are done (PRs 55-72). The app runs end to end locally with Docker.
 
-**Working and committed (new this session):**
-- `.githooks/commit-msg` and `.githooks/prepare-commit-msg`
-- `.prettierrc`
-- `.github/WORKFLOW.md`
-- `logs/` folder with `README.md` and `2026-05-22.md` session log
-- `prompts/` folder with `README.md` and `NEXT.md` (this file)
-- `suggestions/` folder with 11 suggestion files
-- `sql/` folder with queries, seed data and migration guidance
-- `CONTRIBUTING.md` updated with hooks, first-person rule, UK English, log rules
-- `LOG.md` at root updated to index pointing to `logs/`
-- All code comments updated to first-person UK English across backend, firmware and frontend
+**What works:**
+- Dashboard with live device cards, per-sensor charts, time range picker, node type filter
+- Compare page - side by side charts for up to 3 devices
+- Device detail page - sensor grid + charts + Export CSV
+- Admin panel - user table, audit log, alert rules CRUD, firmware upload
+- Backend: JWT auth, audit logging, demo mode, data retention, CSV export, ML evaluate pipeline
+- Dark mode toggle (light mode body works, individual components still dark-only)
 
-**Local only (gitignored):**
-- `.claude/CLAUDE.md` - master rules file (gitignored via .claude/)
-- `.agents/RULES.md`, `.agents/CONTEXT.md`, `.agents/WORKFLOW.md`
-- `extract/` - reference portfolio project
+**New backlog (not done yet) - see suggestions/README.md:**
+1. Login page and session guard - HIGH (admin features need auth from UI)
+2. Full light mode across all components - HIGH (toggle exists but components are dark-only)
+3. WebSocket reconnect - MEDIUM
+4. Alert evaluator for all v2 sensors - MEDIUM
+5. ML retrain endpoint - MEDIUM
+6. Live sensor grid auto-update on device detail - MEDIUM
+7. Multi-tenant device ownership - LOW
+8. alerts.resolved String->Boolean migration - LOW
+9. Ticket creation from alert banner - LOW
+10. Pagination on tickets/devices pages - LOW
+11. Hardware inventory updates as deliveries arrive
+12. Hardware testing (waiting for components)
+13. Isolation Forest training (waiting for hardware data)
+14. Node enclosure design (Phase 2, after MVP validated)
 
 ---
 
-## One-time setup (do this on every fresh clone)
+## Hardware status
+
+Amazon order placed May 2026 - £133.09, most arriving this week.
+See `hardware/inventory/needed.md` for delivery dates.
+See `hardware/inventory/owned.md` for what is already in hand.
+
+**Important notes:**
+- BMP280 ordered instead of BME280 - no humidity on secondary nodes. Check if acceptable.
+- AS5600 diametrically magnetised magnet still needs to be ordered.
+- Logic level shifter 3.3V-5V still needs to be ordered.
+- Check BOJACK 37-values kit and ELEGOO Starter Kit contents before collecting from Aston lab (Richard).
+
+---
+
+## Start backend locally
 
 ```bash
-git config core.hooksPath .githooks
+export PATH="/Applications/Docker.app/Contents/Resources/bin:$PATH"
+docker compose up db redis backend -d
+cd frontend && npm run dev
+curl http://localhost:8000/  # should return {"status":"ok"}
 ```
 
----
+If the DB is empty (containers were recreated with `docker compose down`), re-seed:
+```bash
+# Get device IDs and API keys, POST telemetry with device_id in body
+# See logs/2026-06-01.md seeding section for the full script
+```
 
-## Next steps (in order of priority)
-
-1. **Rate limiting** - `suggestions/rate-limiting.md` - high priority before any public deployment
-2. **Frontend login page** - `suggestions/frontend-login-page.md` - high priority, blocks all user access
-3. **Alembic migrations** - `suggestions/alembic-migrations.md` - must do before production with real data
-4. **`/auth/me` endpoint** - `suggestions/auth-me-endpoint.md` - blocks Phase 2 features
-5. Start building hardware and testing the firmware-to-backend flow end to end
+**Note:** `docker compose stop` preserves data. `docker compose down` wipes the postgres_data volume.
 
 ---
 
-## Blockers
-
-None. All governance work is complete.
-
----
-
-## Most recently changed files (2026-05-23)
-
-- `.gitignore` - CLAUDE.md and .claude/ added as gitignored
-- `.claude/CLAUDE.md` - rules moved here from root (local only)
-- `backend/app/routes/auth.py` - comments updated to first-person
-- `backend/app/services/alert_service.py` - comment updated to first-person
-- `backend/app/services/ml_service.py` - all comments updated to first-person
-- `logs/2026-05-22.md` - updated with comment rewrite summary
-- `prompts/NEXT.md` - this file
-
----
-
-## Key rules reminder (full rules in .claude/CLAUDE.md)
+## Key rules
 
 - UK English (colour/behaviour/organisation/licence)
-- No em/en dashes - hyphens only
+- No em/en dashes - hyphens only in comments
 - No Oxford commas
-- First-person code comments only
-- No AI co-author credits - ever
-- Always update this file and logs/YYYY-MM-DD.md after every action
+- First-person WHY comments ("# I use X because Y")
+- No AI co-author credits
+- Update `logs/YYYY-MM-DD.md` after every file change
 - Never commit directly to main
-- Run `git config core.hooksPath .githooks` on every fresh clone
+- `git config core.hooksPath .githooks` on fresh clone
+- `echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > frontend/.env.local` on fresh clone
+- Auto-merge: `gh pr merge <n> --auto --merge --delete-branch`
