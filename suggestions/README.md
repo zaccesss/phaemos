@@ -39,41 +39,49 @@ High priority items first.
 - [x] PostCSS config (was missing - broke Tailwind)
 - [x] alerts.resolved boolean/string fix
 - [x] Dashboard selected-device polling bug fix
+- [x] **Security hardening** - rate limiting on login, brute-force lockout, WebSocket JWT auth, telemetry GET auth, password strength, firmware 2MB cap, CORS tightened, API key rotation endpoint, audit SQL text() fix (PR 74)
+- [x] **Login page and session guard** - frontend/app/login/page.tsx, Next.js edge middleware, LogoutButton in navbar (PR 75)
+- [x] **Full light mode across all components** - dark: variants on all components and pages (PR 76, pending merge)
+- [x] **Hardware inventory** - Updated hardware/inventory/needed.md and owned.md with all Amazon deliveries received.
 
 ---
 
 ## Backlog
 
-### High priority
-
-- [ ] **Login page and session guard** - `frontend/app/login/page.tsx` does not exist. Admin panel endpoints return 401 from the browser without a token. Add email/password form, POST to `/api/v1/auth/login`, store token, redirect protected routes to `/login` when unauthenticated.
-
-- [ ] **Full light mode across all components** - ThemeToggle works at the body level. DeviceCard, TelemetryChart, SensorGrid and all other components use hardcoded dark Tailwind classes. Add `dark:` prefixes to every dark-only class so the whole UI switches in light mode.
-
 ### Medium priority
 
-- [ ] **WebSocket reconnect on disconnect** - The dashboard WebSocket closes on error without retrying. Add exponential backoff reconnect (max 5 attempts, 1s/2s/4s/8s/16s delays).
+- [ ] **WebSocket reconnect on disconnect** - The dashboard WebSocket closes on error without retrying. Add exponential backoff reconnect (max 5 attempts, 1s/2s/4s/8s/16s delays). Find client with: `grep -r "new WebSocket" frontend/`.
 
-- [ ] **Alert rule evaluation for all v2 sensors** - alert_service.py only checks 6 fields. Extend to cover all numeric telemetry columns dynamically.
+- [ ] **Alert rule evaluation for all v2 sensors** - Check Telemetry ORM model columns vs docs/sensor_reference.md. The ingest route builds `reading` dict from only 6 hardcoded fields - extend to all columns. alert_service.py already uses `reading.get(rule.metric)` generically.
 
-- [ ] **ML retrain endpoint** - POST /api/v1/ml/retrain - reads last N rows, runs train.py, replaces model.pkl, logs precision/recall to audit log. Admin only.
+- [ ] **ML retrain endpoint** - POST /api/v1/ml/retrain (admin only, background task, 1-hour cooldown). Reads last N rows, re-fits IsolationForest reusing backend/ml/preprocess.py + train.py, dumps model.pkl, reloads in-memory model, logs precision/recall to audit log.
 
-- [ ] **Live sensor grid update on device detail page** - SensorGrid shows a static snapshot. Wire it to poll every 5s using the most recent useTelemetry reading.
+- [ ] **Live sensor grid update on device detail page** - SensorGrid in app/devices/[id]/page.tsx shows a static snapshot. Poll GET /telemetry/{id}/latest every 5s via useTelemetry hook and pass the latest reading as a prop.
 
 ### Low priority
 
-- [ ] **Multi-tenant device ownership** - user_id FK on devices so technicians only see their own.
+- [ ] **Multi-tenant device ownership** - Add nullable owner_id FK on devices to users. GET /devices filters: admin sees all, technician sees own + unowned. Alembic migration required.
 
-- [ ] **alerts.resolved column type migration** - Change from String to Boolean via Alembic migration. Remove str(resolved) workaround in routes/alerts.py.
+- [ ] **alerts.resolved column type migration** - Model has Column(String) but DB schema has BOOLEAN. Add Alembic migration with `USING (resolved::boolean)` clause, remove str(resolved) cast in routes/alerts.py.
 
-- [ ] **Ticket creation from alert banner** - Add "Create Ticket" button on AlertBanner pre-filled with alert context.
+- [ ] **Ticket creation from alert banner** - TicketForm already has `prefill` prop (added in PR 76). Wire AlertBanner to open a modal with TicketForm pre-filled from alert context.
 
-- [ ] **Pagination on tickets and devices pages** - Add skip/limit query params and Next/Prev controls.
+- [ ] **Pagination on tickets and devices pages** - Backend: add skip/limit to GET /tickets and GET /devices. Frontend: page state + Prev/Next controls.
 
-- [x] **Hardware inventory** - Updated hardware/inventory/needed.md and owned.md with all Amazon deliveries received.
+### Housekeeping (do in the same session as the last feature)
 
-- [ ] **Custom node enclosure design** - After all 4 nodes tested on breadboard, design housing. Options: 3D print (Aston lab), laser cut acrylic, CNC aluminium. Do not start until sensor layout is finalised and PCB is designed.
+- [ ] Update all READMEs in folders/subfolders touched this session
+- [ ] Update docs/decisions.md with new ADRs (cookie auth, WS JWT, ML retrain, multi-tenant)
+- [ ] Update docs/api-reference.md with new endpoints (retrain, rotate-key, pagination)
+- [ ] Update docs/VERIFICATION.md with new checklist items
+- [ ] Create docs/security.md with the full 18-measure security table
+- [ ] Update SECURITY.md to reference docs/security.md
+- [ ] Create Makefile at repo root (make dev, make test, make lint, make migrate)
+- [ ] Create SUPPORT.md at repo root
+- [ ] Update CHANGELOG.md with all session PRs
 
-- [ ] **Hardware testing** - Test full sensor suite on all 4 boards. See hardware/wiring/ for pinouts and hardware/inventory/owned.md for what is available.
+### Hardware-blocked (do NOT attempt until hardware arrives and is tested)
 
-- [ ] **Train Isolation Forest** - After 1-2 weeks of real telemetry, run backend/ml/train.py and evaluate with evaluate.py. Tune ANOMALY_SCORE_THRESHOLD.
+- [ ] **Custom node enclosure design** - After all 4 nodes tested on breadboard. Options: 3D print (Aston lab), laser cut acrylic, CNC aluminium.
+- [ ] **Hardware testing** - Test full sensor suite on all 4 boards. See hardware/wiring/ for pinouts.
+- [ ] **Train Isolation Forest** - After 1-2 weeks of real telemetry, run backend/ml/train.py and evaluate with evaluate.py.
