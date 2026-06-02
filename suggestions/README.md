@@ -50,21 +50,21 @@ High priority items first.
 
 ### Medium priority
 
-- [ ] **WebSocket reconnect on disconnect** - The dashboard WebSocket closes on error without retrying. Add exponential backoff reconnect (max 5 attempts, 1s/2s/4s/8s/16s delays). Find client with: `grep -r "new WebSocket" frontend/`.
+- [x] **WebSocket reconnect on disconnect** - Added useWebSocketTelemetry hook with exponential backoff (1/2/4/8/16s, max 5 attempts), no retry on 1008 auth failure. Wired into TelemetryChart for live pushes. (PR 77)
 
-- [ ] **Alert rule evaluation for all v2 sensors** - Check Telemetry ORM model columns vs docs/sensor_reference.md. The ingest route builds `reading` dict from only 6 hardcoded fields - extend to all columns. alert_service.py already uses `reading.get(rule.metric)` generically.
+- [x] **Alert rule evaluation for all v2 sensors** - Extended reading dict in ingest route to use payload.model_dump() so all v2 sensor fields reach alert_service.evaluate_rules. (PR 79)
 
-- [ ] **ML retrain endpoint** - POST /api/v1/ml/retrain (admin only, background task, 1-hour cooldown). Reads last N rows, re-fits IsolationForest reusing backend/ml/preprocess.py + train.py, dumps model.pkl, reloads in-memory model, logs precision/recall to audit log.
+- [x] **ML retrain endpoint** - POST /api/v1/ml/retrain (admin only, 202, 1-hour cooldown, background task). Fits IsolationForest on last 10,000 rows, dumps model.pkl, reloads in ml_service. Logs n_samples and n_anomalies to audit log. (PR 80)
 
-- [ ] **Live sensor grid update on device detail page** - SensorGrid in app/devices/[id]/page.tsx shows a static snapshot. Poll GET /telemetry/{id}/latest every 5s via useTelemetry hook and pass the latest reading as a prop.
+- [x] **Live sensor grid update on device detail page** - useTelemetry polls every 5s; liveReadings[0] passed to SensorGrid. Removed redundant one-time fetch. (PR 81)
 
 ### Low priority
 
 - [ ] **Multi-tenant device ownership** - Add nullable owner_id FK on devices to users. GET /devices filters: admin sees all, technician sees own + unowned. Alembic migration required.
 
-- [ ] **alerts.resolved column type migration** - Model has Column(String) but DB schema has BOOLEAN. Add Alembic migration with `USING (resolved::boolean)` clause, remove str(resolved) cast in routes/alerts.py.
+- [x] **alerts.resolved column type migration** - ORM model fixed to Column(Boolean); str() cast removed from filter. No SQL migration needed - DB schema was already BOOLEAN. (PR 82)
 
-- [ ] **Ticket creation from alert banner** - TicketForm already has `prefill` prop (added in PR 76). Wire AlertBanner to open a modal with TicketForm pre-filled from alert context.
+- [x] **Ticket creation from alert banner** - AlertBanner now a client component with Create Ticket button. Opens modal with TicketForm prefilled from alert context (device_id, title, description). (PR 83)
 
 - [ ] **Pagination on tickets and devices pages** - Backend: add skip/limit to GET /tickets and GET /devices. Frontend: page state + Prev/Next controls.
 
