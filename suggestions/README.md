@@ -60,25 +60,25 @@ High priority items first.
 
 ### Low priority
 
-- [ ] **Multi-tenant device ownership** - Add nullable owner_id FK on devices to users. GET /devices filters: admin sees all, technician sees own + unowned. Alembic migration required.
+- [x] **Multi-tenant device ownership** - owner_id nullable FK on devices referencing users. GET /devices now auth-gated; technicians see own + unowned, admins/viewers see all. SQL migration 003_multi_tenant.sql. 5 tests, 26/26 suite. (PR 86)
 
 - [x] **alerts.resolved column type migration** - ORM model fixed to Column(Boolean); str() cast removed from filter. No SQL migration needed - DB schema was already BOOLEAN. (PR 82)
 
 - [x] **Ticket creation from alert banner** - AlertBanner now a client component with Create Ticket button. Opens modal with TicketForm prefilled from alert context (device_id, title, description). (PR 83)
 
-- [ ] **Pagination on tickets and devices pages** - Backend: add skip/limit to GET /tickets and GET /devices. Frontend: page state + Prev/Next controls.
+- [x] **Pagination on tickets and devices pages** - Backend: skip/limit on GET /tickets and GET /devices. Frontend: page state + Prev/Next controls. (PR 84)
 
 ### Housekeeping (do in the same session as the last feature)
 
-- [ ] Update all READMEs in folders/subfolders touched this session
-- [ ] Update docs/decisions.md with new ADRs (cookie auth, WS JWT, ML retrain, multi-tenant)
-- [ ] Update docs/api-reference.md with new endpoints (retrain, rotate-key, pagination)
-- [ ] Update docs/VERIFICATION.md with new checklist items
-- [ ] Create docs/security.md with the full 18-measure security table
-- [ ] Update SECURITY.md to reference docs/security.md
-- [ ] Create Makefile at repo root (make dev, make test, make lint, make migrate)
-- [ ] Create SUPPORT.md at repo root
-- [ ] Update CHANGELOG.md with all session PRs
+- [x] Update all READMEs in folders/subfolders touched this session (PR 85)
+- [x] Update docs/decisions.md with new ADRs - WS JWT (010), ML retrain (011), skip/limit pagination (012) (PR 85)
+- [x] Update docs/api-reference.md with new endpoints (retrain, pagination params) (PR 85)
+- [x] Update docs/VERIFICATION.md with new checklist items (PR 85)
+- [x] Create docs/security.md with the full 18-measure security table (PR 85)
+- [x] Update SECURITY.md to reference docs/security.md (PR 85)
+- [x] Create Makefile at repo root (make dev, make test, make lint, make migrate, make build, make seed) (PR 85)
+- [x] Create SUPPORT.md at repo root (PR 85)
+- [x] Update CHANGELOG.md with all session PRs (v2.2.0) (PR 85)
 
 ### Hardware-blocked (do NOT attempt until hardware arrives and is tested)
 
