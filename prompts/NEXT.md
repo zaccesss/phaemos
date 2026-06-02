@@ -11,15 +11,8 @@ Read this file at the start of every new session to pick up exactly where we lef
 > Continue building Phaemos. Check your memory for full context. Pull and read suggestions/README.md for the backlog, docs/VERIFICATION.md for what is verified, and logs/LOG.md for session history. Start today's date log immediately before touching any file.
 >
 > Priority order from the backlog:
-> 1. WebSocket reconnect on disconnect (exponential backoff, max 5 attempts) - find client with `grep -r "new WebSocket" frontend/`
-> 2. Alert rule evaluation for all v2 sensors (check Telemetry model columns vs docs/sensor_reference.md, extend ingest reading dict)
-> 3. ML retrain endpoint (POST /api/v1/ml/retrain, admin only, background task, 1-hour cooldown, reuses backend/ml/preprocess.py and train.py)
-> 4. Live sensor grid auto-update on device detail (poll /telemetry/{id}/latest every 5s, pass to SensorGrid prop)
-> 5. Multi-tenant device ownership (nullable owner_id FK on devices)
-> 6. alerts.resolved Boolean migration (USING resolved::boolean in SQL, remove str(resolved) cast)
-> 7. Ticket creation from alert banner (TicketForm prefill prop already exists from PR 76 - just wire AlertBanner)
-> 8. Pagination on tickets and devices pages
-> 9. Housekeeping at the very end: READMEs, docs/decisions.md, docs/api-reference.md, docs/security.md, SECURITY.md, Makefile, SUPPORT.md, CHANGELOG.md
+> 1. Multi-tenant device ownership (nullable owner_id FK on devices, alembic migration, role-filtered GET /devices)
+> 2. Housekeeping already done this session - skip to new features
 >
 > Rules: update the session log after every file change. PRs auto-merge (configured). No AI attribution in commits. First-person WHY comments in code. Plain ASCII hyphens only. UK English throughout. Run pytest + ruff before every backend commit. Run npm run lint + npm run build before every frontend commit.
 
@@ -27,29 +20,29 @@ Read this file at the start of every new session to pick up exactly where we lef
 
 ## Current status (as of 2026-06-02)
 
-**Done this session (PRs 74-76):**
-- PR 74 MERGED: Security hardening - rate limiting on /auth/login (slowapi, 5/min), brute-force lockout (5 failures = 15min lock), WebSocket JWT auth (close 1008 on fail), telemetry GET/export require Bearer auth, password strength validation, firmware 2MB upload cap, CORS tightened, API key rotation endpoint, audit_service text() fix, last_login tracking, migrations/002_security_hardening.sql
-- PR 75 MERGED: Login page (frontend/app/login/page.tsx), Next.js edge middleware (frontend/middleware.ts) guards all routes, LogoutButton in navbar
-- PR 76 OPEN (CI running): Full light mode - dark: variants across all components and pages
+**Done this session (PRs 77-85):**
+- PR 77 MERGED: WebSocket reconnect hook with exponential backoff, TelemetryChart live push wiring
+- PR 78 MERGED: git hook execute bit committed
+- PR 79 MERGED: Alert rule evaluation extended to all v2 sensors
+- PR 80 MERGED: ML retrain endpoint POST /api/v1/ml/retrain (admin, 202, 1-hour cooldown, background task)
+- PR 81 MERGED: Live sensor grid auto-update on device detail (5s poll)
+- PR 82 MERGED: alerts.resolved ORM column String -> Boolean fix
+- PR 83 MERGED: AlertBanner Create Ticket button with prefilled modal
+- PR 84 MERGED: Pagination on tickets and devices (skip/limit backend, Prev/Next frontend)
+- PR 85 OPEN: Session housekeeping docs (docs/security.md, Makefile, SUPPORT.md, CHANGELOG, decisions.md, api-reference.md, VERIFICATION.md, SECURITY.md, NEXT.md)
 
 **What works:**
 - Dashboard, compare page, device detail, admin panel, alerts, tickets, devices
 - JWT auth end-to-end (login form, middleware guard, Bearer token for API, WS JWT)
-- Light/dark toggle switches the entire UI (PR 76, pending merge)
+- WebSocket live telemetry with exponential backoff reconnect
+- Light/dark toggle switches the entire UI
 - Security: rate limiting, lockout, WS auth, telemetry auth, password strength, CORS
-- Backend: audit log, demo mode, data retention, CSV export, ML pipeline, firmware OTA
+- Backend: audit log, demo mode, data retention, CSV export, ML pipeline, firmware OTA, ML retrain
 - Docker Compose runs end-to-end locally
+- Pagination on tickets and devices
 
 **Remaining backlog (see suggestions/README.md for full detail):**
-1. WebSocket reconnect - MEDIUM
-2. Alert evaluator for all v2 sensors - MEDIUM
-3. ML retrain endpoint - MEDIUM
-4. Live sensor grid auto-update - MEDIUM
-5. Multi-tenant device ownership - LOW
-6. alerts.resolved Boolean migration - LOW
-7. Ticket creation from alert banner - LOW (TicketForm prefill prop already added)
-8. Pagination on tickets and devices - LOW
-9. End-of-session housekeeping (docs, READMEs, CHANGELOG, Makefile, SUPPORT.md, docs/security.md)
+1. Multi-tenant device ownership - LOW (nullable owner_id FK on devices, alembic migration)
 
 **Hardware-blocked (do not start):**
 - Custom node enclosure design
@@ -67,7 +60,10 @@ cd frontend && npm run dev
 curl http://localhost:8000/  # should return {"status":"ok"}
 ```
 
+Or use `make dev` from the repo root (see Makefile).
+
 Run migration on existing DB if backend crashes on login:
+
 ```bash
 docker exec phaemos-db-1 psql -U postgres -d phaemos -c "ALTER TABLE users ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER NOT NULL DEFAULT 0, ADD COLUMN IF NOT EXISTS locked_until TIMESTAMP WITH TIME ZONE;"
 ```
@@ -85,18 +81,22 @@ If containers were recreated with `docker compose down`, re-seed (see logs/2026-
 - No Oxford commas
 - First-person WHY comments in code
 - No AI co-author credits
-- Update `logs/YYYY-MM-DD.md` after every file change
+- Update `logs/YYYY-MM-DD.md` after every file change with detailed explanations (see logs/2026-06-02.md for the required format)
 - Never commit directly to main
 - Hooks already executable: `git config core.hooksPath .githooks` already set
 - `echo "NEXT_PUBLIC_API_URL=http://localhost:8000" > frontend/.env.local` on fresh clone
 - Auto-merge: `gh pr merge <n> --auto --merge --delete-branch`
+- Use `make test` and `make lint` before every commit
 
 ---
 
 ## Important notes for next session
 
-- **TicketForm prefill prop** already exists (added in PR 76) - accept `prefill?: { device_id?, description?, title? }`. AlertBanner just needs a "Create Ticket" button that passes alert context.
-- **alerts.resolved** - the SQL schema has BOOLEAN but the Python model has Column(String). Do this migration before any alert work to avoid silent corruption.
-- **WebSocket client** - find with `grep -r "new WebSocket" frontend/`. Reconnect must NOT retry on 1008 close code (auth failure) - that would loop forever.
-- **Backend image rebuild** needed after any requirements.txt change: `docker compose build backend`
-- **Git hooks are now executable** - no more "hook ignored" warnings on commit
+- **Multi-tenant device ownership** is the only remaining backlog item. It requires:
+  1. Add nullable `owner_id UUID` FK on `devices` referencing `users.id`
+  2. Alembic migration (or raw SQL in `migrations/003_multi_tenant.sql`)
+  3. `GET /devices` filter: admin sees all, technician sees own + unowned, viewer sees all
+  4. Frontend: no change needed unless we want a device ownership UI
+- **All housekeeping is done** - CHANGELOG, decisions, api-reference, VERIFICATION, security.md, Makefile, SUPPORT.md, NEXT.md all updated
+- **ruff is installed via brew** on the dev machine (`brew install ruff`) - use directly without Docker for linting
+- **git hooks** are now committed as executable (PR 78) - no more silent failures on fresh clones
