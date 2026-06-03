@@ -11,17 +11,14 @@ Read this at the start of every session to know what to work on next.
 
 ## Backlog
 
-### Medium priority
+All software backlog items are complete as of PR 134. The remaining work is hardware-blocked.
 
-- [ ] **Auth on remaining device endpoints** - POST /devices, PATCH /devices/{id} and GET /devices/{id} have no auth guard. Anyone who knows a device UUID can update its name or status. Add `Depends(get_current_user)` to those three routes; PATCH should also check ownership (technician can only update their own device).
+### Completed (software)
 
-- [ ] **Refresh token / silent JWT renewal** - The current JWT has a fixed expiry and the user gets hard-logged-out when it expires. Add a short-lived access token (15 min) and a long-lived refresh token (7 days, httpOnly cookie). The frontend should silently exchange the refresh token for a new access token before expiry.
-
-### Low priority
-
-- [ ] **Device ownership assignment UI** - There is no frontend way to set or change `owner_id` on a device. Add an owner picker to the device detail page (admin only): a `<select>` listing all users with role=technician, PATCH to `/devices/{id}` with `{owner_id}`.
-
-- [ ] **Tab visibility API in useTelemetry** - Polling continues when the browser tab is hidden, wasting requests. Add a `visibilitychange` event listener that pauses `setInterval` when `document.hidden` is true and resumes when the tab becomes visible again.
+- [x] **Auth on remaining device endpoints** - POST /devices, PATCH /devices/{id} and GET /devices/{id} - done in PR 88
+- [x] **Refresh token / silent JWT renewal** - 15-min access token + 7-day httpOnly refresh cookie - done in PR 89 (backend) and PR 99 (frontend interceptor)
+- [x] **Device ownership assignment UI** - owner picker on device detail page (admin only) - done in PR 106
+- [x] **Tab visibility API in useTelemetry** - pauses polling when tab is hidden - done in PR 107
 
 ---
 
