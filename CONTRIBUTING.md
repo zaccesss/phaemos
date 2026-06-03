@@ -13,6 +13,7 @@ git config core.hooksPath .githooks
 ```
 
 This enables:
+
 - `commit-msg` - rejects em/en dashes and Oxford commas in commit messages
 - `prepare-commit-msg` - strips AI co-author credits automatically
 
@@ -34,7 +35,7 @@ This enables:
 
 | Prefix                       | When to use            |
 | ---------------------------- | ---------------------- |
-| `feature/short-description`  | New capability         |
+| `feat/short-description`     | New capability         |
 | `fix/short-description`      | Bug correction         |
 | `docs/short-description`     | Documentation only     |
 | `refactor/short-description` | Internal restructure   |
@@ -44,7 +45,7 @@ This enables:
 
 ## Commit Message Format
 
-```
+```text
 type: short description
 ```
 
@@ -105,9 +106,27 @@ Use the issue templates provided:
 - **Bug report** for something that is broken.
 - **Feature request** for a new capability.
 
+Do not open public issues for security vulnerabilities. See [SECURITY.md](SECURITY.md) or the [security policy page](https://phaemos.com/security) for responsible disclosure instructions.
+
+---
+
+## Email Aliases
+
+When adding or editing pages that include contact email addresses, use the correct phaemos.com alias:
+
+| Alias | Use for |
+| ----- | ------- |
+| `contact@phaemos.com` | Legal pages, general enquiries |
+| `hello@phaemos.com` | Landing page, marketing-facing copy |
+| `dev@phaemos.com` | Technical queries, security disclosures |
+| `support@phaemos.com` | User-facing support pages |
+| `no-reply@phaemos.com` | Automated application emails (set reply-to: support@) |
+
+Never use a personal email address in any file in this repository.
+
 ---
 
 ## Licence
 
 By contributing you agree that your work will be released under the
-[MIT Licence](LICENSE).
+[GNU Affero General Public License v3](LICENSE).
