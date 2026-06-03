@@ -99,6 +99,18 @@ no "Generated with Claude" or any similar attribution).
 
 ---
 
+## Questions and discussion
+
+Use [GitHub Discussions](https://github.com/zaccesss/phaemos/discussions) for:
+
+- Questions about setup, usage or architecture
+- Feature ideas and feedback
+- Sharing what you have built with PHAEMOS
+
+Discussions are the preferred place for questions - keep Issues for confirmed bugs and accepted feature work.
+
+---
+
 ## Reporting Issues
 
 Use the issue templates provided:
