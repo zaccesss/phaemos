@@ -40,25 +40,14 @@ Thumbs.db
 .idea/
 *.swp
 
+# Linting cache
+.ruff_cache/
+
 # Log files (but not the logs/ folder - that is committed)
 *.log
 
 # Local agent workspace - never commit
 .agents/
-
-# Reference extract folder - never commit
-extract/
-
-# Claude Code local config and rules - never commit
-.claude/
-CLAUDE.md
-
-# Cursor IDE local config - never commit
-.cursor/
-
-# Local agent instructions
-.github/AGENTS.md
-.github/copilot-instructions.md
 
 # Local-only session files - never commit, git pull must not overwrite them
 prompts/
