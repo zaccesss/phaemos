@@ -23,6 +23,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 
 - Auto-merge is now ecosystem-aware: patch and minor Dependabot bumps and major GitHub Actions bumps auto-merge once CI passes, but major `npm` and `pip` bumps are held for manual review since a breaking runtime change could pass lint and build yet still deploy; previously major bumps were skipped entirely
+- README rewritten: dropped the leftover animated capsule-render footer banner, switched the prose to first person, fixed a stale architecture line that implied ML anomaly scoring was not yet built (it has been live since Phase 2, only real hardware data is still pending), verified every doc link and image still resolves
 
 ## [2.3.0] - 2026-06-03
 
