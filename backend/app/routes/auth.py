@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+import bcrypt
 import httpx
 import pyotp
 import qrcode
@@ -13,6 +14,16 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
+
+# passlib's bcrypt backend reads bcrypt.__about__.__version__ to detect the
+# installed bcrypt version, which bcrypt 4.1+ removed. The failed detection
+# falls back to a broken code path that misreports a valid password as
+# exceeding 72 bytes. Restoring the attribute it expects fixes both.
+if not hasattr(bcrypt, "__about__"):
+    class _BcryptAbout:
+        __version__ = bcrypt.__version__
+
+    bcrypt.__about__ = _BcryptAbout()
 
 from app.config import settings
 from app.db import get_db
