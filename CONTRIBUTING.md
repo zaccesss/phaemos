@@ -95,7 +95,7 @@ was made, not how.
 AI-generated code is not accepted in this repository. All contributions must be
 written by the author. Do not include AI co-author attributions in commit
 messages or anywhere else in the codebase (no `Co-authored-by: GitHub Copilot`,
-no "Generated with Claude" or any similar attribution).
+no `Generated with Claude` or any similar attribution).
 
 ---
 
