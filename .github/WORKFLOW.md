@@ -42,7 +42,7 @@ The `.githooks/commit-msg` hook rejects commits that violate these rules. The `.
 
 - Use conventional prefixes: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`, `perf:`
 - No em dashes (--) or en dashes (-) - use a hyphen (-) instead
-- No Oxford comma - write "x, y and z" not "x, y, and z"
+- No Oxford comma - write "x, y and z" not "x, y and z"
 - No AI co-author credits or AI attribution of any kind
 - Subject line 72 characters or fewer
 - UK English throughout
