@@ -134,6 +134,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [2.1.0] - 2026-06-01
 
 ### Added
+
 - Login page and session guard (backlog - next session)
 - Hardware inventory tracking: hardware/inventory/owned.md and needed.md with full component list
 - README added to every folder and subfolder across the entire repo
@@ -143,6 +144,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Dashboard selected-device polling bug fix - user selection no longer resets every 5 seconds
 
 ### Changed
+
 - TelemetryChart refactored: prop changed from readings[] to deviceId, now manages own data fetch
 - Dashboard uses Promise.allSettled so a failing alerts query never blocks device cards
 - layout.tsx: suppressHydrationWarning on html element, proper light/dark body classes
@@ -150,6 +152,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [2.0.0] - 2026-05-30
 
 ### Added
+
 - Extended telemetry schema with 18 new sensor columns (v2)
 - ESP32 v2 structured firmware: 10 sensor modules, 4 output modules, 3 comms modules
 - STM32 Black Pill firmware (FFT vibration analysis)

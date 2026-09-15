@@ -24,5 +24,7 @@ jobs:
       - name: Run markdownlint
         uses: DavidAnson/markdownlint-cli2-action@v24.1.0
         with:
-          globs: '**/*.md'
+          globs: |
+            **/*.md
+            !logs/**
           config: '.markdownlint.json'
