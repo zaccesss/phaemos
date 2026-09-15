@@ -20,6 +20,8 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - GitHub Sponsors added to `.github/FUNDING.yml` as first entry; order updated to github, buy_me_a_coffee, patreon
 - `Repo maintenance` workflow (`update-pr-branches.yml`) to delete merged PR branches the merge could not clean up
+- `.markdownlint.json` and a `markdownlint.yml` CI workflow, with a `.github/workflows/README.md` documenting every workflow in the repository
+- YAML issue forms (`bug_report.yml`, `feature_request.yml`) replacing the old markdown issue templates
 
 ### Changed
 
